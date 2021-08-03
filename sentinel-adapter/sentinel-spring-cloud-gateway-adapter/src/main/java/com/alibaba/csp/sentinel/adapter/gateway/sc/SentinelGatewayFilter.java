@@ -61,6 +61,7 @@ public class SentinelGatewayFilter implements GatewayFilter, GlobalFilter, Order
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         Route route = exchange.getAttribute(ServerWebExchangeUtils.GATEWAY_ROUTE_ATTR);
+        String path = exchange.getRequest().getMethodValue().toUpperCase() + ":" + exchange.getRequest().getPath().value();
 
         Mono<Void> asyncResult = chain.filter(exchange);
         if (route != null) {
@@ -71,7 +72,7 @@ public class SentinelGatewayFilter implements GatewayFilter, GlobalFilter, Order
                 .map(f -> f.apply(exchange))
                 .orElse("");
             asyncResult = asyncResult.transform(
-                new SentinelReactorTransformer<>(new EntryConfig(routeId, ResourceTypeConstants.COMMON_API_GATEWAY,
+                new SentinelReactorTransformer<>(new EntryConfig(path, ResourceTypeConstants.COMMON_API_GATEWAY,
                     EntryType.IN, 1, params, new ContextConfig(contextName(routeId), origin)))
             );
         }
